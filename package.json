@@ -8,9 +8,15 @@
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "check": "node src/index.js --once",
-    "check:dry": "node src/index.js --once --dry"
+    "check:dry": "node src/index.js --once --dry",
+    "test": "node src/index.js --test"
   },
-  "keywords": ["openrouter", "telegram", "monitor", "models"],
+  "keywords": [
+    "openrouter",
+    "telegram",
+    "monitor",
+    "models"
+  ],
   "license": "MIT",
   "dependencies": {
     "axios": "^1.7.7",

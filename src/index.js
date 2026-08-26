@@ -2,6 +2,7 @@ import 'dotenv/config';
 import cron from 'node-cron';
 import { getModels } from './openrouter.js';
 import { runCheck } from './monitor.js';
+import { sendMessage, formatNewModel, formatNewFreeModel } from './telegram.js';
 
 const logger = {
   info: (...a) => console.log(`[${ts()}]`, ...a),
@@ -15,6 +16,7 @@ function ts() {
 
 const args = process.argv.slice(2);
 const once = args.includes('--once');
+const test = args.includes('--test');
 const dryRun = args.includes('--dry') || !process.env.TELEGRAM_BOT_TOKEN;
 
 async function check(label) {
@@ -36,6 +38,42 @@ async function main() {
   } else if (!process.env.TELEGRAM_NEW_MODELS_CHAT_ID) {
     logger.error('Не задан TELEGRAM_NEW_MODELS_CHAT_ID в .env — добавлять модели некуда.');
     process.exit(1);
+  }
+
+  // Тестовое сообщение с реальным форматом
+  if (test && !dryRun) {
+    const chatId = process.env.TELEGRAM_NEW_MODELS_CHAT_ID;
+    try {
+      // Отправляем пример нового сообщения и бесплатного сообщения
+      await sendMessage(chatId, formatNewModel({
+        id: 'anthropic/claude-sonnet-4',
+        name: 'Anthropic: Claude Sonnet 4',
+        provider: 'Anthropic',
+        context: 200000,
+        maxCompletion: 16384,
+        modality: 'text->text',
+        prompt: 0.003,
+        completion: 0.015,
+        free: false,
+        created: Date.now() / 1000,
+      }));
+      await sendMessage(chatId, formatNewFreeModel({
+        id: 'google/gemini-flash-2.0:free',
+        name: 'Google: Gemini Flash 2.0 (Free)',
+        provider: 'Google',
+        context: 1048576,
+        maxCompletion: 8192,
+        modality: 'text->text',
+        prompt: 0,
+        completion: 0,
+        free: true,
+        created: Date.now() / 1000,
+      }));
+      logger.info('Тестовые сообщения (реальный формат) отправлены!');
+    } catch (err) {
+      logger.error(`Не удалось отправить тестовые сообщения: ${err.message}`);
+    }
+    return;
   }
 
   await check('при запуске');
