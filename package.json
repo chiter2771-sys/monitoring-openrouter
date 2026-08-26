@@ -1,0 +1,20 @@
+{
+  "name": "openrouter-model-monitor",
+  "version": "1.0.0",
+  "description": "Мониторинг новых и бесплатных моделей OpenRouter с рассылкой в Telegram",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "check": "node src/index.js --once",
+    "check:dry": "node src/index.js --once --dry"
+  },
+  "keywords": ["openrouter", "telegram", "monitor", "models"],
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "node-cron": "^3.0.3"
+  }
+}
