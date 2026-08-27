@@ -8,7 +8,7 @@ export const COMMANDS = [
   { cmd: '/free',   desc: 'Список бесплатных моделей' },
   { cmd: '/paid',   desc: 'Список платных моделей' },
   { cmd: '/all',    desc: 'Список всех моделей' },
-  { cmd: '/search', desc: 'Поиск: /search <название>' },
+  { cmd: '/search', desc: 'Поиск: /search название' },
 ];
 
 export async function handleCommand(text, getModels) {
@@ -18,10 +18,8 @@ export async function handleCommand(text, getModels) {
   if (trimmed === '/free')   return cmdFree(getModels);
   if (trimmed === '/paid')   return cmdPaid(getModels);
   if (trimmed === '/all')    return cmdAll(getModels);
+  if (trimmed === '/search') return cmdSearchHelp();
 
-  if (trimmed === '/search') return '🔍 Использование: /search <название>
-
-Пример: /search claude';
   const searchMatch = trimmed.match(/^\/search\s+(.+)$/);
   if (searchMatch) return cmdSearch(searchMatch[1], getModels);
 
@@ -33,13 +31,23 @@ function cmdStart() {
     '🤖 <b>OpenRouter Model Bot</b>',
     '',
     'Доступные команды:',
-    ...COMMANDS.map(c => `  ${esc(c.cmd)} — ${esc(c.desc)}`),
+    ...COMMANDS.map(c => '  ' + esc(c.cmd) + ' — ' + esc(c.desc)),
     '',
     'Примеры:',
     '  /free — показать бесплатные модели',
     '  /search claude — найти модель',
   ];
   return lines.join('\n');
+}
+
+function cmdSearchHelp() {
+  return [
+    '🔍 <b>Использование поиска</b>',
+    '',
+    '/search название',
+    '',
+    'Пример: /search claude',
+  ].join('\n');
 }
 
 async function cmdFree(getModels) {
@@ -64,9 +72,9 @@ async function cmdSearch(query, getModels) {
     m.id.toLowerCase().includes(query.toLowerCase())
   );
   if (models.length === 0) {
-    return `😕 Ничего не найдено по запросу "<b>${esc(query)}</b>"`;
+    return '😕 Ничего не найдено по запросу "<b>' + esc(query) + '</b>"';
   }
-  return formatList(models, `🔍 Результаты по "${esc(query)}" (${models.length})`, models.length);
+  return formatList(models, '🔍 Результаты по "' + esc(query) + '" (' + models.length + ')', models.length);
 }
 
 function formatList(models, title, total) {
@@ -75,7 +83,7 @@ function formatList(models, title, total) {
   const lines = [title];
 
   if (total > PAGE_SIZE) {
-    lines.push(`(показано ${PAGE_SIZE} из ${total})`);
+    lines.push('(показано ' + PAGE_SIZE + ' из ' + total + ')');
   }
 
   lines.push('');
@@ -83,11 +91,11 @@ function formatList(models, title, total) {
   for (const m of limited) {
     const price = m.free ? '🎁 бесплатно' : fmtPrice(m);
     lines.push(
-      `<b>${esc(m.name)}</b>`,
-      `🏭 ${esc(m.provider)}`,
-      `📏 ${m.context.toLocaleString('ru-RU')} ток.`,
-      `💵 ${price}`,
-      `🔗 ${modelLink(m.id)}`,
+      '<b>' + esc(m.name) + '</b>',
+      '🏭 ' + esc(m.provider),
+      '📏 ' + m.context.toLocaleString('ru-RU') + ' ток.',
+      '💵 ' + price,
+      '🔗 ' + modelLink(m.id),
       ''
     );
   }
@@ -98,12 +106,12 @@ function formatList(models, title, total) {
 function fmtPrice(model) {
   const inP = model.prompt * 1e6;
   const outP = model.completion * 1e6;
-  const fmt = (v) => `$${v.toLocaleString('en-US', { maximumFractionDigits: v >= 1 ? 2 : 4 })}`;
-  return `${fmt(inP)} / 1M вх · ${fmt(outP)} / 1M вых`;
+  const fmt = (v) => '$' + v.toLocaleString('en-US', { maximumFractionDigits: v >= 1 ? 2 : 4 });
+  return fmt(inP) + ' / 1M вх · ' + fmt(outP) + ' / 1M вых';
 }
 
 function modelLink(id) {
-  return `https://openrouter.ai/${id.replace(/:free$/, '')}`;
+  return 'https://openrouter.ai/' + id.replace(/:free$/, '');
 }
 
 function esc(text) {
