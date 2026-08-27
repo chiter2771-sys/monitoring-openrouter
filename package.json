@@ -1,7 +1,7 @@
 {
   "name": "openrouter-model-monitor",
   "version": "1.0.0",
-  "description": "Мониторинг новых и бесплатных моделей OpenRouter с рассылкой в Telegram",
+  "description": "Мониторинг новых и бесплатных моделей OpenRouter с рассылкой в Telegram и командами в ЛС",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
