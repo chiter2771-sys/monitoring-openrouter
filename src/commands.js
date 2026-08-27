@@ -8,7 +8,7 @@ export const COMMANDS = [
   { cmd: '/free',   desc: 'Список бесплатных моделей' },
   { cmd: '/paid',   desc: 'Список платных моделей' },
   { cmd: '/all',    desc: 'Список всех моделей' },
-  { cmd: '/search <имя>', desc: 'Поиск модели по названию или провайдеру' },
+  { cmd: '/search', desc: 'Поиск: /search <название>' },
 ];
 
 export async function handleCommand(text, getModels) {
@@ -19,6 +19,9 @@ export async function handleCommand(text, getModels) {
   if (trimmed === '/paid')   return cmdPaid(getModels);
   if (trimmed === '/all')    return cmdAll(getModels);
 
+  if (trimmed === '/search') return '🔍 Использование: /search <название>
+
+Пример: /search claude';
   const searchMatch = trimmed.match(/^\/search\s+(.+)$/);
   if (searchMatch) return cmdSearch(searchMatch[1], getModels);
 
@@ -30,7 +33,7 @@ function cmdStart() {
     '🤖 <b>OpenRouter Model Bot</b>',
     '',
     'Доступные команды:',
-    ...COMMANDS.map(c => `  ${c.cmd} — ${c.desc}`),
+    ...COMMANDS.map(c => `  ${esc(c.cmd)} — ${esc(c.desc)}`),
     '',
     'Примеры:',
     '  /free — показать бесплатные модели',
