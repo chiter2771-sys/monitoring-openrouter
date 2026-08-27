@@ -25,10 +25,19 @@ const dryRun = args.includes('--dry') || !process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 let pollOffset = 0;
 
+async function deleteWebhook() {
+  try {
+    await axios.get(`${TELEGRAM_API}/deleteWebhook`, { timeout: 10000 });
+    logger.info('Webhook удалён, polling активен');
+  } catch (err) {
+    logger.warn(`Не удалось удалить webhook: ${err.message}`);
+  }
+}
+
 async function pollOnce() {
   try {
     const { data } = await axios.get(`${TELEGRAM_API}/getUpdates`, {
-      params: { offset: pollOffset, timeout: 10 },
+      params: { offset: pollOffset, timeout: 1 },
       timeout: 15000,
     });
 
@@ -38,12 +47,12 @@ async function pollOnce() {
       pollOffset = update.update_id + 1;
 
       if (!update.message || !update.message.text) continue;
-      if (update.message.chat.type !== 'private') continue; // только ЛС
+      if (update.message.chat.type !== 'private') continue;
 
       const chatId = update.message.chat.id;
       const text = update.message.text;
 
-      // Тестовое сообщение (флаг --test)
+      // Тестовое сообщение
       if (text === '/test') {
         const { sendMessage, formatNewModel, formatNewFreeModel } = await import('./telegram.js');
         await sendMessage(chatId, formatNewModel({
@@ -81,6 +90,11 @@ async function pollOnce() {
       }
     }
   } catch (err) {
+    if (err.response?.status === 409) {
+      // Конфликт — другой active connection, ждём чуть дольше
+      await sleep(5000);
+      return;
+    }
     if (err.code === 'ECONNABORTED') return; // timeout — нормально
     logger.error(`Polling error: ${err.message}`);
   }
@@ -92,18 +106,8 @@ async function startPolling() {
     return;
   }
 
+  await deleteWebhook();
   logger.info('Telegram polling запущен (ЛС команды)...');
-
-  // Первый вызов сбрасывает offset до последних обновлений
-  try {
-    const { data } = await axios.get(`${TELEGRAM_API}/getUpdates`, {
-      params: { offset: pollOffset, timeout: 1 },
-      timeout: 5000,
-    });
-    if (data.ok && data.result.length > 0) {
-      pollOffset = data.result[data.result.length - 1].update_id + 1;
-    }
-  } catch { /* ignore */ }
 
   // Цикл опроса
   while (true) {
@@ -177,8 +181,8 @@ async function main() {
     return;
   }
 
-  // Запускаем polling бота для ЛС (фоновый)
-  startPolling();
+  // Запускаем polling бота для ЛС (фоновый) — только в режиме демона
+  if (!once) startPolling();
 
   await check('при запуске');
 
